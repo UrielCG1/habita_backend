@@ -8,7 +8,7 @@ from app.services.property_service import (
     delete_property,
     get_properties,
     get_property_by_id,
-    update_property,
+    patch_property,
 )
 
 router = APIRouter(prefix="/properties", tags=["Properties"])
