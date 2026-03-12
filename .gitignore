@@ -9,3 +9,7 @@ __pycache__/
 .idea/
 .vscode/
 *.log
+*.sql
+*.ini
+alembic/*
+
