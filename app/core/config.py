@@ -15,3 +15,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DATABASE_URL = (
     f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+STORAGE_DIR = os.path.join(PROJECT_ROOT, "storage")
+PROPERTY_IMAGES_DIR = os.path.join(STORAGE_DIR, "properties")
+MEDIA_URL = "/media"
