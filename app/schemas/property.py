@@ -1,0 +1,61 @@
+from decimal import Decimal
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class PropertyBase(BaseModel):
+    title: str = Field(..., max_length=180)
+    description: Optional[str] = None
+    price: Decimal
+    property_type: str = Field(..., max_length=50)
+    status: str = Field(default="available", max_length=30)
+
+    address_line: str = Field(..., max_length=255)
+    neighborhood: Optional[str] = Field(default=None, max_length=120)
+    city: str = Field(..., max_length=100)
+    state: str = Field(..., max_length=100)
+
+    bedrooms: int = 1
+    bathrooms: int = 1
+    parking_spaces: Optional[int] = None
+    area_m2: Optional[Decimal] = None
+
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+
+    is_published: bool = True
+
+
+class PropertyCreate(PropertyBase):
+    owner_id: int
+
+
+class PropertyUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=180)
+    description: Optional[str] = None
+    price: Optional[Decimal] = None
+    property_type: Optional[str] = Field(default=None, max_length=50)
+    status: Optional[str] = Field(default=None, max_length=30)
+
+    address_line: Optional[str] = Field(default=None, max_length=255)
+    neighborhood: Optional[str] = Field(default=None, max_length=120)
+    city: Optional[str] = Field(default=None, max_length=100)
+    state: Optional[str] = Field(default=None, max_length=100)
+
+    bedrooms: Optional[int] = None
+    bathrooms: Optional[int] = None
+    parking_spaces: Optional[int] = None
+    area_m2: Optional[Decimal] = None
+
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+
+    is_published: Optional[bool] = None
+
+
+class PropertyResponse(PropertyBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    owner_id: int
