@@ -46,7 +46,7 @@ def patch_property_endpoint(
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
 
-    return update_property(db, property_obj, payload)
+    return patch_property(db, property_obj, payload)
 
 
 @router.delete("/{property_id}", status_code=status.HTTP_204_NO_CONTENT)
