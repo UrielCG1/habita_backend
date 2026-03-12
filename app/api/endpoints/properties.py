@@ -36,8 +36,8 @@ def detail_property(property_id: int, db: Session = Depends(get_db)):
     return property_obj
 
 
-@router.put("/{property_id}", response_model=PropertyResponse)
-def update_property_endpoint(
+@router.patch("/{property_id}", response_model=PropertyResponse)
+def patch_property_endpoint(
     property_id: int,
     payload: PropertyUpdate,
     db: Session = Depends(get_db),

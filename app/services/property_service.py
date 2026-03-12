@@ -26,7 +26,7 @@ def get_property_by_id(db: Session, property_id: int):
     return db.query(Property).filter(Property.id == property_id).first()
 
 
-def update_property(db: Session, property_obj: Property, payload: PropertyUpdate) -> Property:
+def patch_property(db: Session, property_obj: Property, payload: PropertyUpdate) -> Property:
     update_data = payload.model_dump(exclude_unset=True)
 
     for field, value in update_data.items():

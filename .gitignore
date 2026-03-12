@@ -13,3 +13,5 @@ __pycache__/
 *.ini
 alembic/*
 
+*.bru
+*.json
