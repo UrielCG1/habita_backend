@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.property_image import PropertyImageResponse
+
 
 class PropertyBase(BaseModel):
     title: str = Field(..., max_length=180)
@@ -54,8 +56,17 @@ class PropertyUpdate(BaseModel):
     is_published: Optional[bool] = None
 
 
-class PropertyResponse(PropertyBase):
+class PropertyCardResponse(PropertyBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     owner_id: int
+    cover_image: Optional[PropertyImageResponse] = None
+
+
+class PropertyDetailResponse(PropertyBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    owner_id: int
+    images: list[PropertyImageResponse] = []

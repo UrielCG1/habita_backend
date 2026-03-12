@@ -3,6 +3,7 @@ from typing import Optional
 from sqlalchemy import Boolean, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.config import MEDIA_URL
 from app.db.database import Base
 from app.models.mixins import TimestampMixin
 
@@ -19,3 +20,7 @@ class PropertyImage(TimestampMixin, Base):
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     property = relationship("Property", back_populates="images")
+
+    @property
+    def file_url(self) -> str:
+        return f"{MEDIA_URL}/{self.file_path}"

@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import Optional
 
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.property import Property
 from app.schemas.property import PropertyCreate, PropertyUpdate
@@ -31,7 +31,7 @@ def get_properties(
     bathrooms: Optional[int] = None,
     is_published: Optional[bool] = None,
 ):
-    query = db.query(Property)
+    query = db.query(Property).options(selectinload(Property.images))
 
     if q:
         term = f"%{q.strip()}%"
@@ -73,7 +73,7 @@ def get_properties(
     if is_published is not None:
         query = query.filter(Property.is_published == is_published)
 
-    return (
+    properties = (
         query
         .order_by(Property.id.desc())
         .offset(skip)
@@ -81,9 +81,24 @@ def get_properties(
         .all()
     )
 
+    for property_obj in properties:
+        property_obj.images.sort(key=lambda img: (not img.is_cover, img.sort_order, img.id))
+
+    return properties
+
 
 def get_property_by_id(db: Session, property_id: int):
-    return db.query(Property).filter(Property.id == property_id).first()
+    property_obj = (
+        db.query(Property)
+        .options(selectinload(Property.images))
+        .filter(Property.id == property_id)
+        .first()
+    )
+
+    if property_obj:
+        property_obj.images.sort(key=lambda img: (not img.is_cover, img.sort_order, img.id))
+
+    return property_obj
 
 
 def patch_property(db: Session, property_obj: Property, payload: PropertyUpdate) -> Property:

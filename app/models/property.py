@@ -18,8 +18,8 @@ class Property(TimestampMixin, Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    property_type: Mapped[str] = mapped_column(String(50), nullable=False)   # house, apartment, room
-    status: Mapped[str] = mapped_column(String(30), nullable=False, default="available")  # available, rented, hidden
+    property_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="available")
 
     address_line: Mapped[str] = mapped_column(String(255), nullable=False)
     neighborhood: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
@@ -41,3 +41,14 @@ class Property(TimestampMixin, Base):
     favorites = relationship("Favorite", back_populates="property", cascade="all, delete-orphan")
     reviews = relationship("Review", back_populates="property", cascade="all, delete-orphan")
     rental_requests = relationship("RentalRequest", back_populates="property", cascade="all, delete-orphan")
+
+    @property
+    def cover_image(self):
+        if not self.images:
+            return None
+
+        ordered_images = sorted(
+            self.images,
+            key=lambda img: (not img.is_cover, img.sort_order, img.id),
+        )
+        return ordered_images[0]

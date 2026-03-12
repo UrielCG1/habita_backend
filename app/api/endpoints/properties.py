@@ -5,7 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.property import PropertyCreate, PropertyResponse, PropertyUpdate
+from app.schemas.property import (
+    PropertyCardResponse,
+    PropertyCreate,
+    PropertyDetailResponse,
+    PropertyUpdate,
+)
 from app.services.property_service import (
     create_property,
     delete_property,
@@ -17,12 +22,12 @@ from app.services.property_service import (
 router = APIRouter(prefix="/properties", tags=["Properties"])
 
 
-@router.post("/", response_model=PropertyResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=PropertyCardResponse, status_code=status.HTTP_201_CREATED)
 def create_property_endpoint(payload: PropertyCreate, db: Session = Depends(get_db)):
     return create_property(db, payload)
 
 
-@router.get("/", response_model=list[PropertyResponse])
+@router.get("/", response_model=list[PropertyCardResponse])
 def list_properties(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
@@ -55,7 +60,7 @@ def list_properties(
     )
 
 
-@router.get("/{property_id}", response_model=PropertyResponse)
+@router.get("/{property_id}", response_model=PropertyDetailResponse)
 def detail_property(property_id: int, db: Session = Depends(get_db)):
     property_obj = get_property_by_id(db, property_id)
     if not property_obj:
@@ -63,7 +68,7 @@ def detail_property(property_id: int, db: Session = Depends(get_db)):
     return property_obj
 
 
-@router.patch("/{property_id}", response_model=PropertyResponse)
+@router.patch("/{property_id}", response_model=PropertyCardResponse)
 def patch_property_endpoint(
     property_id: int,
     payload: PropertyUpdate,
