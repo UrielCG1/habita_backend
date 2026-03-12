@@ -37,7 +37,7 @@ class Property(TimestampMixin, Base):
     is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     owner = relationship("User", back_populates="properties")
-    images = relationship("PropertyImage", back_populates="property", cascade="all, delete-orphan")
+    images = relationship("PropertyImage", back_populates="property_obj", cascade="all, delete-orphan")
     favorites = relationship("Favorite", back_populates="property", cascade="all, delete-orphan")
     reviews = relationship("Review", back_populates="property", cascade="all, delete-orphan")
     rental_requests = relationship("RentalRequest", back_populates="property", cascade="all, delete-orphan")
