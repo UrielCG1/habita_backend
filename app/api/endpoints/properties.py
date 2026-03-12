@@ -1,3 +1,6 @@
+from decimal import Decimal
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -23,9 +26,33 @@ def create_property_endpoint(payload: PropertyCreate, db: Session = Depends(get_
 def list_properties(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
+    q: Optional[str] = Query(default=None),
+    city: Optional[str] = Query(default=None),
+    state: Optional[str] = Query(default=None),
+    property_type: Optional[str] = Query(default=None),
+    status_filter: Optional[str] = Query(default=None, alias="status"),
+    min_price: Optional[Decimal] = Query(default=None, ge=0),
+    max_price: Optional[Decimal] = Query(default=None, ge=0),
+    bedrooms: Optional[int] = Query(default=None, ge=0),
+    bathrooms: Optional[int] = Query(default=None, ge=0),
+    is_published: Optional[bool] = Query(default=None),
     db: Session = Depends(get_db),
 ):
-    return get_properties(db, skip=skip, limit=limit)
+    return get_properties(
+        db=db,
+        skip=skip,
+        limit=limit,
+        q=q,
+        city=city,
+        state=state,
+        property_type=property_type,
+        status=status_filter,
+        min_price=min_price,
+        max_price=max_price,
+        bedrooms=bedrooms,
+        bathrooms=bathrooms,
+        is_published=is_published,
+    )
 
 
 @router.get("/{property_id}", response_model=PropertyResponse)
