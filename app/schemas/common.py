@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Optional
 
 from pydantic import BaseModel
 
@@ -25,7 +25,7 @@ class SuccessResponse(BaseModel, Generic[T]):
 class ErrorDetailResponse(BaseModel):
     type: str
     message: str
-    details: object Optional[object] = None
+    details: Optional[object] = None
 
 
 class ErrorResponse(BaseModel):
