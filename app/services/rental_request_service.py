@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session, selectinload
 from fastapi import HTTPException
+from typing import Optional
 
 from app.models.property import Property
 from app.models.rental_request import RentalRequest
