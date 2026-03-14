@@ -5,7 +5,7 @@ from app.api.endpoints.properties import router as properties_router
 from app.api.endpoints.property_images import router as property_images_router
 from app.api.endpoints.rental_requests import router as rental_requests_router
 from app.api.endpoints.reviews import router as reviews_router
-from api.endpoints.users import router as users_router
+from app.api.endpoints.users import router as users_router
 
 api_router = APIRouter()
 api_router.include_router(properties_router)
