@@ -126,7 +126,7 @@ def list_property_rental_requests(
     property_id: int,
     skip: int = 0,
     limit: int = 20,
-    status: str | None = None,
+    status: Optional[str] = None,
 ):
     _get_property_or_404(db, property_id)
 

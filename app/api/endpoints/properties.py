@@ -4,7 +4,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.responses import paginated_response, success_response
 from app.db.session import get_db
+from app.schemas.common import PaginatedData, SuccessResponse
 from app.schemas.property import (
     PropertyCardResponse,
     PropertyCreate,
@@ -22,12 +24,13 @@ from app.services.property_service import (
 router = APIRouter(prefix="/properties", tags=["Properties"])
 
 
-@router.post("/", response_model=PropertyCardResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=SuccessResponse[PropertyCardResponse], status_code=status.HTTP_201_CREATED)
 def create_property_endpoint(payload: PropertyCreate, db: Session = Depends(get_db)):
-    return create_property(db, payload)
+    property_obj = create_property(db, payload)
+    return success_response(property_obj)
 
 
-@router.get("/", response_model=list[PropertyCardResponse])
+@router.get("/", response_model=SuccessResponse[PaginatedData[PropertyCardResponse]])
 def list_properties(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
@@ -43,7 +46,7 @@ def list_properties(
     is_published: Optional[bool] = Query(default=None),
     db: Session = Depends(get_db),
 ):
-    return get_properties(
+    total, items = get_properties(
         db=db,
         skip=skip,
         limit=limit,
@@ -58,17 +61,18 @@ def list_properties(
         bathrooms=bathrooms,
         is_published=is_published,
     )
+    return paginated_response(items=items, total=total, skip=skip, limit=limit)
 
 
-@router.get("/{property_id}", response_model=PropertyDetailResponse)
+@router.get("/{property_id}", response_model=SuccessResponse[PropertyDetailResponse])
 def detail_property(property_id: int, db: Session = Depends(get_db)):
     property_obj = get_property_by_id(db, property_id)
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
-    return property_obj
+    return success_response(property_obj)
 
 
-@router.patch("/{property_id}", response_model=PropertyCardResponse)
+@router.patch("/{property_id}", response_model=SuccessResponse[PropertyCardResponse])
 def patch_property_endpoint(
     property_id: int,
     payload: PropertyUpdate,
@@ -78,7 +82,8 @@ def patch_property_endpoint(
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
 
-    return patch_property(db, property_obj, payload)
+    updated_property = patch_property(db, property_obj, payload)
+    return success_response(updated_property)
 
 
 @router.delete("/{property_id}", status_code=status.HTTP_204_NO_CONTENT)

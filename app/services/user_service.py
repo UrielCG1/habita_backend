@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserPatch
@@ -24,7 +25,7 @@ def _get_user_or_404(db: Session, user_id: int) -> User:
     return user
 
 
-def _ensure_email_is_unique(db: Session, email: str, current_user_id: int | None = None) -> None:
+def _ensure_email_is_unique(db: Session, email: str, current_user_id: Optional[int] = None) -> None:
     query = db.query(User).filter(User.email == email)
 
     if current_user_id is not None:
@@ -53,7 +54,13 @@ def create_user(db: Session, payload: UserCreate) -> User:
     return new_user
 
 
-def get_users(db: Session, skip: int = 0, limit: int = 20, role: str | None = None, is_active: bool | None = None):
+def get_users(
+    db: Session,
+    skip: int = 0,
+    limit: int = 20,
+    role: Optional[str] = None,
+    is_active: Optional[bool] = None,
+):
     query = db.query(User)
 
     if role:
@@ -62,7 +69,9 @@ def get_users(db: Session, skip: int = 0, limit: int = 20, role: str | None = No
     if is_active is not None:
         query = query.filter(User.is_active == is_active)
 
-    return (
+    total = query.count()
+
+    items = (
         query
         .order_by(User.id.desc())
         .offset(skip)
@@ -70,6 +79,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 20, role: str | None = No
         .all()
     )
 
+    return total, items
 
 def get_user_by_id(db: Session, user_id: int) -> User:
     return _get_user_or_404(db, user_id)

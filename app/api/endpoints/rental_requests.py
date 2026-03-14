@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from app.db.session import get_db
 from app.schemas.rental_request import (
@@ -69,7 +70,7 @@ def list_property_rental_requests_endpoint(
     property_id: int,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
-    status_filter: str | None = Query(default=None, alias="status"),
+    status_filter: Optional[str] = Query(default=None, alias="status"),
     db: Session = Depends(get_db),
 ):
     return list_property_rental_requests(

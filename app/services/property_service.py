@@ -73,7 +73,9 @@ def get_properties(
     if is_published is not None:
         query = query.filter(Property.is_published == is_published)
 
-    properties = (
+    total = query.count()
+
+    items = (
         query
         .order_by(Property.id.desc())
         .offset(skip)
@@ -81,10 +83,10 @@ def get_properties(
         .all()
     )
 
-    for property_obj in properties:
+    for property_obj in items:
         property_obj.images.sort(key=lambda img: (not img.is_cover, img.sort_order, img.id))
 
-    return properties
+    return total, items
 
 
 def get_property_by_id(db: Session, property_id: int):

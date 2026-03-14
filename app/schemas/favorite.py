@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class FavoriteStatusResponse(BaseModel):
@@ -9,4 +10,4 @@ class FavoriteStatusResponse(BaseModel):
 
 class FavoriteActionResponse(FavoriteStatusResponse):
     message: str
-    favorite_id: int | None = None
+    favorite_id: Optional[int] = None
