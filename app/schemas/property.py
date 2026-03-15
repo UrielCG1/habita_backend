@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
 from app.schemas.property_image import PropertyImageResponse
 
@@ -61,6 +61,7 @@ class PropertyCardResponse(PropertyBase):
 
     id: int
     owner_id: int
+    owner: Optional["PropertyOwnerResponse"] = None
     cover_image: Optional[PropertyImageResponse] = None
 
 
@@ -69,4 +70,15 @@ class PropertyDetailResponse(PropertyBase):
 
     id: int
     owner_id: int
+    owner: Optional["PropertyOwnerResponse"] = None
     images: list[PropertyImageResponse] = []
+    
+    
+### admin 
+
+class PropertyOwnerResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    full_name: str
+    email: EmailStr

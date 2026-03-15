@@ -30,8 +30,12 @@ def get_properties(
     bedrooms: Optional[int] = None,
     bathrooms: Optional[int] = None,
     is_published: Optional[bool] = None,
+    owner_id: Optional[int] = None,
 ):
-    query = db.query(Property).options(selectinload(Property.images))
+    query = db.query(Property).options(
+        selectinload(Property.images),
+        selectinload(Property.owner),
+    )
 
     if q:
         term = f"%{q.strip()}%"
@@ -72,6 +76,9 @@ def get_properties(
 
     if is_published is not None:
         query = query.filter(Property.is_published == is_published)
+    
+    if owner_id is not None:
+        query = query.filter(Property.owner_id == owner_id)
 
     total = query.count()
 
@@ -92,7 +99,10 @@ def get_properties(
 def get_property_by_id(db: Session, property_id: int):
     property_obj = (
         db.query(Property)
-        .options(selectinload(Property.images))
+        .options(
+            selectinload(Property.images),
+            selectinload(Property.owner)
+        )
         .filter(Property.id == property_id)
         .first()
     )

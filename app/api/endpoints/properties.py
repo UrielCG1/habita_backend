@@ -44,6 +44,7 @@ def list_properties(
     bedrooms: Optional[int] = Query(default=None, ge=0),
     bathrooms: Optional[int] = Query(default=None, ge=0),
     is_published: Optional[bool] = Query(default=None),
+    owner_id: Optional[int] = Query(default=None, ge=1),
     db: Session = Depends(get_db),
 ):
     total, items = get_properties(
@@ -60,6 +61,7 @@ def list_properties(
         bedrooms=bedrooms,
         bathrooms=bathrooms,
         is_published=is_published,
+        owner_id=owner_id,
     )
     return paginated_response(items=items, total=total, skip=skip, limit=limit)
 

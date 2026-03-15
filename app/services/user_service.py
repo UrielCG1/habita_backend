@@ -6,7 +6,7 @@ from app.core.security import hash_password
 from app.models.user import User
 from app.schemas.user import UserCreate, UserPatch
 
-VALID_USER_ROLES = {"admin", "owner", "tenant"}
+VALID_USER_ROLES = {"admin", "owner", "tenant"} # admin, "owner" y "tenant"
 
 
 def _normalize_role(role: str) -> str:
