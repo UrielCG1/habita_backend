@@ -1,16 +1,10 @@
 venv_backend/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.env
 .alembic
 .pytest_cache/
 .idea/
 .vscode/
 *.log
 *.sql
-*.ini
 alembic/*
 
 *.bru
