@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from typing import Optional
 
 
 class AuthUserResponse(BaseModel):
@@ -7,7 +8,7 @@ class AuthUserResponse(BaseModel):
     id: int
     full_name: str
     email: EmailStr
-    phone: str | None = None
+    phone: Optional[str] = None
     role: str
     is_active: bool
 
@@ -28,7 +29,7 @@ class RegisterRequest(BaseModel):
     full_name: str = Field(..., max_length=150)
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
-    phone: str | None = Field(default=None, max_length=20)
+    phone: Optional[str] = Field(default=None, max_length=20)
     role: str = Field(default="tenant", max_length=20)
 
 

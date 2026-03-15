@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -32,14 +33,14 @@ def _create_token(subject: str, token_type: str, expires_delta: timedelta) -> st
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
-def create_access_token(subject: str, expires_minutes: int | None = None) -> str:
+def create_access_token(subject: str, expires_minutes: Optional[int] = None) -> str:
     expire_delta = timedelta(
         minutes=expires_minutes or JWT_ACCESS_TOKEN_EXPIRE_MINUTES
     )
     return _create_token(subject=subject, token_type="access", expires_delta=expire_delta)
 
 
-def create_refresh_token(subject: str, expires_days: int | None = None) -> str:
+def create_refresh_token(subject: str, expires_days: Optional[int] = None) -> str:
     expire_delta = timedelta(days=expires_days or JWT_REFRESH_TOKEN_EXPIRE_DAYS)
     return _create_token(subject=subject, token_type="refresh", expires_delta=expire_delta)
 
@@ -48,7 +49,7 @@ def decode_token(token: str) -> dict:
     return jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
 
 
-def get_token_subject(token: str) -> str | None:
+def get_token_subject(token: str) -> Optional[str]:
     try:
         payload = decode_token(token)
         return payload.get("sub")
