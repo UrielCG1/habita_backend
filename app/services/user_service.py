@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
 
+from app.core.security import hash_password
 from app.models.user import User
 from app.schemas.user import UserCreate, UserPatch
 
@@ -42,7 +43,7 @@ def create_user(db: Session, payload: UserCreate) -> User:
     new_user = User(
         full_name=payload.full_name,
         email=payload.email,
-        password_hash=payload.password_hash,
+        password_hash=hash_password(payload.password),
         phone=payload.phone,
         role=_normalize_role(payload.role),
         is_active=payload.is_active,
@@ -81,6 +82,7 @@ def get_users(
 
     return total, items
 
+
 def get_user_by_id(db: Session, user_id: int) -> User:
     return _get_user_or_404(db, user_id)
 
@@ -93,6 +95,9 @@ def patch_user(db: Session, user_obj: User, payload: UserPatch) -> User:
 
     if "role" in update_data and update_data["role"] is not None:
         update_data["role"] = _normalize_role(update_data["role"])
+
+    if "password" in update_data and update_data["password"]:
+        update_data["password_hash"] = hash_password(update_data.pop("password"))
 
     for field, value in update_data.items():
         setattr(user_obj, field, value)

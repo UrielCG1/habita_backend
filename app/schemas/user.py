@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 class UserCreate(BaseModel):
     full_name: str = Field(..., max_length=150)
     email: EmailStr
-    password_hash: str = Field(..., max_length=255)
+    password: str = Field(..., min_length=8, max_length=128)
     phone: Optional[str] = Field(default=None, max_length=20)
     role: str = Field(default="tenant", max_length=20)
     is_active: bool = True
@@ -16,7 +16,7 @@ class UserCreate(BaseModel):
 class UserPatch(BaseModel):
     full_name: Optional[str] = Field(default=None, max_length=150)
     email: Optional[EmailStr] = None
-    password_hash: Optional[str] = Field(default=None, max_length=255)
+    password: Optional[str] = Field(default=None, min_length=8, max_length=128)
     phone: Optional[str] = Field(default=None, max_length=20)
     role: Optional[str] = Field(default=None, max_length=20)
     is_active: Optional[bool] = None
