@@ -4,6 +4,9 @@ from pathlib import Path
 from typing import Optional
 from uuid import uuid4
 
+import mimetypes
+from fastapi.responses import FileResponse
+
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
@@ -140,3 +143,56 @@ def delete_property_image(db: Session, image_id: int) -> None:
 
     db.delete(image)
     db.commit()
+
+
+
+
+
+def patch_property_image(db: Session, image_id: int, payload) -> PropertyImage:
+    image_obj = db.query(PropertyImage).filter(PropertyImage.id == image_id).first()
+
+    if not image_obj:
+        raise HTTPException(status_code=404, detail="Property image not found")
+
+    update_data = payload.model_dump(exclude_unset=True)
+
+    if update_data.get("is_cover") is True:
+        (
+            db.query(PropertyImage)
+            .filter(PropertyImage.property_id == image_obj.property_id)
+            .update({"is_cover": False}, synchronize_session=False)
+        )
+
+    for field, value in update_data.items():
+        setattr(image_obj, field, value)
+
+    db.commit()
+    db.refresh(image_obj)
+    return image_obj
+
+
+
+## get images 
+
+def get_property_image_content(db: Session, image_id: int) -> FileResponse:
+    image = db.query(PropertyImage).filter(PropertyImage.id == image_id).first()
+    if not image:
+        raise HTTPException(status_code=404, detail="Property image not found")
+
+    absolute_path = os.path.join(STORAGE_DIR, image.file_path)
+
+    if not os.path.exists(absolute_path) or not os.path.isfile(absolute_path):
+        raise HTTPException(status_code=404, detail="Image file not found")
+
+    filename = Path(image.file_path).name
+    media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+
+    return FileResponse(
+        path=absolute_path,
+        media_type=media_type,
+        filename=filename,
+        content_disposition_type="inline",
+        headers={
+            "Cache-Control": "public, max-age=3600",
+        },
+    )
