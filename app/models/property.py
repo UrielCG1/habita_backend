@@ -25,6 +25,7 @@ class Property(TimestampMixin, Base):
     neighborhood: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     city: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     state: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    postal_code: Mapped[Optional[str]] = mapped_column(String(10), nullable=True, index=True)
 
     bedrooms: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     bathrooms: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
