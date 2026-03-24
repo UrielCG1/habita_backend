@@ -12,6 +12,7 @@ from app.schemas.property import (
     PropertyCreate,
     PropertyDetailResponse,
     PropertyUpdate,
+    PropertyGeocodePreviewResponse,
 )
 from app.services.property_service import (
     create_property,
@@ -19,6 +20,7 @@ from app.services.property_service import (
     get_properties,
     get_property_by_id,
     patch_property,
+    geocode_property_address,
 )
 
 router = APIRouter(prefix="/properties", tags=["Properties"])
@@ -96,3 +98,25 @@ def delete_property_endpoint(property_id: int, db: Session = Depends(get_db)):
 
     delete_property(db, property_obj)
     return None
+
+
+@router.get("/geocode-preview", response_model=SuccessResponse[PropertyGeocodePreviewResponse])
+def property_geocode_preview(
+    address_line: str = Query(...),
+    neighborhood: Optional[str] = Query(default=None),
+    city: str = Query(...),
+    state: str = Query(...),
+    postal_code: Optional[str] = Query(default=None),
+):
+    result = geocode_property_address(
+        address_line=address_line,
+        neighborhood=neighborhood,
+        city=city,
+        state=state,
+        postal_code=postal_code,
+    )
+
+    if not result:
+        raise HTTPException(status_code=404, detail="No fue posible ubicar la dirección.")
+
+    return success_response(result)

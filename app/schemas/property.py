@@ -10,16 +10,17 @@ class PropertyBase(BaseModel):
     title: str = Field(..., max_length=180)
     description: Optional[str] = None
     price: Decimal
-    property_type: str = Field(..., max_length=50)
-    status: str = Field(default="available", max_length=30)
+    property_type: str
+    status: str = "available"
 
     address_line: str = Field(..., max_length=255)
     neighborhood: Optional[str] = Field(default=None, max_length=120)
     city: str = Field(..., max_length=100)
     state: str = Field(..., max_length=100)
+    postal_code: Optional[str] = Field(default=None, max_length=10)
 
-    bedrooms: int = 1
-    bathrooms: int = 1
+    bedrooms: int
+    bathrooms: int
     parking_spaces: Optional[int] = None
     area_m2: Optional[Decimal] = None
 
@@ -44,6 +45,7 @@ class PropertyUpdate(BaseModel):
     neighborhood: Optional[str] = Field(default=None, max_length=120)
     city: Optional[str] = Field(default=None, max_length=100)
     state: Optional[str] = Field(default=None, max_length=100)
+    postal_code: Optional[str] = Field(default=None, max_length=10)
 
     bedrooms: Optional[int] = None
     bathrooms: Optional[int] = None
@@ -56,6 +58,12 @@ class PropertyUpdate(BaseModel):
     is_published: Optional[bool] = None
 
 
+class PropertyGeocodePreviewResponse(BaseModel):
+    latitude: Decimal
+    longitude: Decimal
+    display_name: str
+    query: str
+    
 class PropertyCardResponse(PropertyBase):
     model_config = ConfigDict(from_attributes=True)
 

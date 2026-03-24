@@ -6,15 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.property import Property
 from app.schemas.property import PropertyCreate, PropertyUpdate
-
-
-def create_property(db: Session, payload: PropertyCreate) -> Property:
-    new_property = Property(**payload.model_dump())
-    db.add(new_property)
-    db.commit()
-    db.refresh(new_property)
-    return new_property
-
+from app.services.geocoding_service import geocode_property_address
 
 def get_properties(
     db: Session,
@@ -113,8 +105,57 @@ def get_property_by_id(db: Session, property_id: int):
     return property_obj
 
 
+def delete_property(db: Session, property_obj: Property) -> None:
+    db.delete(property_obj)
+    db.commit()
+    
+    
+def _apply_geocoding_to_data(data: dict) -> dict:
+    geocoded = geocode_property_address(
+        address_line=data.get("address_line"),
+        neighborhood=data.get("neighborhood"),
+        city=data.get("city"),
+        state=data.get("state"),
+        postal_code=data.get("postal_code"),
+    )
+
+    if geocoded:
+        data["latitude"] = geocoded["latitude"]
+        data["longitude"] = geocoded["longitude"]
+
+    return data
+
+
+def create_property(db: Session, payload: PropertyCreate) -> Property:
+    data = payload.model_dump()
+    data = _apply_geocoding_to_data(data)
+
+    new_property = Property(**data)
+    db.add(new_property)
+    db.commit()
+    db.refresh(new_property)
+    return new_property
+
+
 def patch_property(db: Session, property_obj: Property, payload: PropertyUpdate) -> Property:
     update_data = payload.model_dump(exclude_unset=True)
+
+    location_fields = {"address_line", "neighborhood", "city", "state", "postal_code"}
+    should_regeocode = any(field in update_data for field in location_fields)
+
+    if should_regeocode:
+        merged = {
+            "address_line": update_data.get("address_line", property_obj.address_line),
+            "neighborhood": update_data.get("neighborhood", property_obj.neighborhood),
+            "city": update_data.get("city", property_obj.city),
+            "state": update_data.get("state", property_obj.state),
+            "postal_code": update_data.get("postal_code", property_obj.postal_code),
+        }
+
+        geocoded = geocode_property_address(**merged)
+        if geocoded:
+            update_data["latitude"] = geocoded["latitude"]
+            update_data["longitude"] = geocoded["longitude"]
 
     for field, value in update_data.items():
         setattr(property_obj, field, value)
@@ -122,8 +163,3 @@ def patch_property(db: Session, property_obj: Property, payload: PropertyUpdate)
     db.commit()
     db.refresh(property_obj)
     return property_obj
-
-
-def delete_property(db: Session, property_obj: Property) -> None:
-    db.delete(property_obj)
-    db.commit()
