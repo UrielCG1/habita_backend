@@ -14,8 +14,8 @@ class PropertyImageResponse(BaseModel):
     is_cover: bool
     sort_order: int
 
-    
+
 class PropertyImagePatch(BaseModel):
     alt_text: Optional[str] = Field(default=None, max_length=255)
     is_cover: Optional[bool] = None
-    sort_order: Optional[int] = None
+    sort_order: Optional[int] = Field(default=None, ge=0)

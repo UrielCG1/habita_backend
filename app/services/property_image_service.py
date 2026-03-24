@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.config import MEDIA_URL, PROPERTY_IMAGES_DIR, STORAGE_DIR
 from app.models.property import Property
 from app.models.property_image import PropertyImage
+from app.schemas.property_image import PropertyImagePatch
 
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -148,13 +149,20 @@ def delete_property_image(db: Session, image_id: int) -> None:
 
 
 
-def patch_property_image(db: Session, image_id: int, payload) -> PropertyImage:
+def patch_property_image(
+    db: Session,
+    image_id: int,
+    payload: PropertyImagePatch,
+) -> PropertyImage:
     image_obj = db.query(PropertyImage).filter(PropertyImage.id == image_id).first()
 
     if not image_obj:
         raise HTTPException(status_code=404, detail="Property image not found")
 
     update_data = payload.model_dump(exclude_unset=True)
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields were provided to update")
 
     if update_data.get("is_cover") is True:
         (
@@ -169,7 +177,6 @@ def patch_property_image(db: Session, image_id: int, payload) -> PropertyImage:
     db.commit()
     db.refresh(image_obj)
     return image_obj
-
 
 
 ## get images 
