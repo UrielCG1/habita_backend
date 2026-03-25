@@ -8,6 +8,7 @@ from app.models.property import Property
 from app.schemas.property import PropertyCreate, PropertyUpdate
 from app.services.geocoding_service import geocode_location_preview
 
+
 def get_properties(
     db: Session,
     skip: int = 0,
@@ -68,7 +69,7 @@ def get_properties(
 
     if is_published is not None:
         query = query.filter(Property.is_published == is_published)
-    
+
     if owner_id is not None:
         query = query.filter(Property.owner_id == owner_id)
 
@@ -108,8 +109,15 @@ def get_property_by_id(db: Session, property_id: int):
 def delete_property(db: Session, property_obj: Property) -> None:
     db.delete(property_obj)
     db.commit()
-    
-    
+
+
+def _has_explicit_coordinates(data: dict) -> bool:
+    return (
+        data.get("latitude") not in (None, "")
+        and data.get("longitude") not in (None, "")
+    )
+
+
 def _apply_geocoding_to_data(data: dict) -> dict:
     geocoded = geocode_location_preview(
         address_line=data.get("address_line"),
@@ -122,6 +130,9 @@ def _apply_geocoding_to_data(data: dict) -> dict:
     if geocoded:
         data["latitude"] = geocoded["latitude"]
         data["longitude"] = geocoded["longitude"]
+    elif not _has_explicit_coordinates(data):
+        data["latitude"] = None
+        data["longitude"] = None
 
     return data
 
@@ -163,8 +174,17 @@ def patch_property(db: Session, property_obj: Property, payload: PropertyUpdate)
         if geocoded:
             update_data["latitude"] = geocoded["latitude"]
             update_data["longitude"] = geocoded["longitude"]
+        else:
+            explicit_lat = update_data.get("latitude")
+            explicit_lon = update_data.get("longitude")
+
+            if explicit_lat in (None, "") or explicit_lon in (None, ""):
+                update_data["latitude"] = None
+                update_data["longitude"] = None
 
     for field, value in update_data.items():
+        if field in {"latitude", "longitude"} and value == "":
+            value = None
         setattr(property_obj, field, value)
 
     db.commit()

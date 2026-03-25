@@ -12,8 +12,8 @@ from app.schemas.property import (
     PropertyCreate,
     PropertyDetailResponse,
     PropertyUpdate,
-    PropertyGeocodePreviewResponse,
 )
+from app.services.geocoding_service import geocode_location_preview
 from app.services.property_service import (
     create_property,
     delete_property,
@@ -21,7 +21,6 @@ from app.services.property_service import (
     get_property_by_id,
     patch_property,
 )
-from app.services.geocoding_service import geocode_location_preview
 
 router = APIRouter(prefix="/properties", tags=["Properties"])
 
@@ -68,6 +67,61 @@ def list_properties(
     return paginated_response(items=items, total=total, skip=skip, limit=limit)
 
 
+@router.get("/geocode-preview")
+def geocode_preview(
+    street: Optional[str] = Query(default=None),
+    address_line: Optional[str] = Query(default=None),
+    county: Optional[str] = Query(default=None),
+    neighborhood: Optional[str] = Query(default=None),
+    city: Optional[str] = Query(default=None),
+    state: Optional[str] = Query(default=None),
+    postalcode: Optional[str] = Query(default=None),
+    postal_code: Optional[str] = Query(default=None),
+    country: str = Query(default="Mexico", min_length=1),
+):
+    resolved_street = (street or address_line or "").strip()
+    resolved_county = (county or neighborhood or "").strip()
+    resolved_city = (city or "").strip()
+    resolved_state = (state or "").strip()
+    resolved_postalcode = (postalcode or postal_code or "").strip()
+    resolved_country = (country or "Mexico").strip() or "Mexico"
+
+    if not resolved_city or not resolved_state:
+        return {
+            "success": False,
+            "error": "Captura al menos ciudad y estado.",
+            "data": None,
+        }
+
+    if not resolved_street and not resolved_county and not resolved_postalcode:
+        return {
+            "success": False,
+            "error": "Captura al menos calle, colonia o código postal.",
+            "data": None,
+        }
+
+    result = geocode_location_preview(
+        address_line=resolved_street,
+        neighborhood=resolved_county,
+        city=resolved_city,
+        state=resolved_state,
+        postal_code=resolved_postalcode,
+        country=resolved_country,
+    )
+
+    if not result:
+        return {
+            "success": False,
+            "error": "No se pudo ubicar la dirección.",
+            "data": None,
+        }
+
+    return {
+        "success": True,
+        "data": result,
+    }
+
+
 @router.get("/{property_id}", response_model=SuccessResponse[PropertyDetailResponse])
 def detail_property(property_id: int, db: Session = Depends(get_db)):
     property_obj = get_property_by_id(db, property_id)
@@ -98,34 +152,3 @@ def delete_property_endpoint(property_id: int, db: Session = Depends(get_db)):
 
     delete_property(db, property_obj)
     return None
-
-
-@router.get("/geocode-preview")
-def geocode_preview(
-    street: Optional[str] = Query(default=None),
-    county: Optional[str] = Query(default=None),
-    city: str = Query(..., min_length=1),
-    state: str = Query(..., min_length=1),
-    postalcode: Optional[str] = Query(default=None),
-    country: str = Query(default="Mexico", min_length=1),
-):
-    result = geocode_location_preview(
-        street=street or "",
-        county=county or "",
-        city=city or "",
-        state=state or "",
-        postalcode=postalcode or "",
-        country=country or "Mexico",
-    )
-
-    if not result:
-        return {
-            "success": False,
-            "error": "No se pudo ubicar la dirección.",
-            "data": None,
-        }
-
-    return {
-        "success": True,
-        "data": result,
-    }

@@ -62,7 +62,7 @@ class PropertyGeocodePreviewResponse(BaseModel):
     latitude: Decimal
     longitude: Decimal
     display_name: str
-    query: str
+    query_used: dict[str, str] | None = None
     
 class PropertyCardResponse(PropertyBase):
     model_config = ConfigDict(from_attributes=True)
