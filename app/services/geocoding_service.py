@@ -1,88 +1,129 @@
+import logging
+from typing import Optional
+
 import requests
 
-NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+logger = logging.getLogger(__name__)
 
-def geocode_location_preview(
-    address_line: str,
-    neighborhood: str,
+NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search"
+
+
+def _clean(value: str) -> str:
+    return (value or "").strip()
+
+
+def _build_structured_params(
+    *,
+    street: str,
+    county: str,
     city: str,
     state: str,
-    postal_code: str,
-):
-    headers = {
-        "User-Agent": "HABITA/1.0 (location preview)",
-    }
-
-    structured_params = {
-        "street": (address_line or "").strip(),
-        "city": (city or "").strip(),
-        "county": (neighborhood or "").strip(),
-        "state": (state or "").strip(),
-        "postalcode": (postal_code or "").strip(),
-        "country": "Mexico",
-        "countrycodes": "mx",
+    postalcode: str,
+    country: str,
+) -> dict:
+    params = {
         "format": "jsonv2",
         "limit": 1,
         "addressdetails": 1,
+        "countrycodes": "mx",
     }
 
-    # limpiar vacíos
-    structured_params = {k: v for k, v in structured_params.items() if v}
+    street = _clean(street)
+    county = _clean(county)
+    city = _clean(city)
+    state = _clean(state)
+    postalcode = _clean(postalcode)
+    country = _clean(country)
 
-    response = requests.get(
-        NOMINATIM_URL,
-        params=structured_params,
-        headers=headers,
-        timeout=10,
+    if street:
+        params["street"] = street
+
+    if county:
+        params["county"] = county
+
+    if city:
+        params["city"] = city
+
+    if state:
+        params["state"] = state
+
+    if postalcode:
+        params["postalcode"] = postalcode
+
+    if country:
+        params["country"] = country
+
+    return params
+
+
+def geocode_structured_location(
+    *,
+    street: str,
+    county: str,
+    city: str,
+    state: str,
+    postalcode: str,
+    country: str = "Mexico",
+) -> Optional[dict]:
+    params = _build_structured_params(
+        street=street,
+        county=county,
+        city=city,
+        state=state,
+        postalcode=postalcode,
+        country=country,
     )
-    response.raise_for_status()
-    results = response.json()
 
-    if results:
-        item = results[0]
-        return {
-            "latitude": float(item["lat"]),
-            "longitude": float(item["lon"]),
-            "display_name": item.get("display_name") or "",
-            "query_mode": "structured",
-            "query_used": structured_params,
-        }
+    headers = {
+        "User-Agent": "HABITA/1.0 (structured geocode preview)",
+        "Accept-Language": "es-MX,es;q=0.9",
+    }
 
-    # fallback libre
-    free_form = ", ".join(
-        part for part in [
-            (address_line or "").strip(),
-            (neighborhood or "").strip(),
-            (city or "").strip(),
-            (state or "").strip(),
-            (postal_code or "").strip(),
-            "Mexico",
-        ] if part
-    )
+    try:
+        response = requests.get(
+            NOMINATIM_SEARCH_URL,
+            params=params,
+            headers=headers,
+            timeout=10,
+        )
+        response.raise_for_status()
+        results = response.json()
 
-    response = requests.get(
-        NOMINATIM_URL,
-        params={
-            "q": free_form,
-            "countrycodes": "mx",
-            "format": "jsonv2",
-            "limit": 1,
-            "addressdetails": 1,
-        },
-        headers=headers,
-        timeout=10,
-    )
-    response.raise_for_status()
-    results = response.json()
+        logger.info(
+            "[geocode_structured_location] params=%s results=%s",
+            params,
+            len(results),
+        )
 
-    if results:
-        item = results[0]
-        return {
-            "latitude": float(item["lat"]),
-            "longitude": float(item["lon"]),
-            "display_name": item.get("display_name") or "",
-            "query_mode": "free_form",
-            "query_used": free_form,
-        }
+    except requests.RequestException as exc:
+        logger.warning(
+            "[geocode_structured_location] request_error=%s params=%s",
+            str(exc),
+            params,
+        )
+        return None
+    except ValueError as exc:
+        logger.warning(
+            "[geocode_structured_location] invalid_json=%s params=%s",
+            str(exc),
+            params,
+        )
+        return None
 
-    return None
+    if not results:
+        return None
+
+    item = results[0]
+
+    lat = item.get("lat")
+    lon = item.get("lon")
+
+    if not lat or not lon:
+        return None
+
+    return {
+        "latitude": float(lat),
+        "longitude": float(lon),
+        "display_name": item.get("display_name") or "",
+        "query_used": params,
+    }

@@ -21,7 +21,7 @@ from app.services.property_service import (
     get_property_by_id,
     patch_property,
 )
-from app.services.geocoding_service import geocode_location_preview
+from app.services.geocoding_service import geocode_structured_location
 
 router = APIRouter(prefix="/properties", tags=["Properties"])
 
@@ -100,23 +100,32 @@ def delete_property_endpoint(property_id: int, db: Session = Depends(get_db)):
     return None
 
 
-@router.get("/geocode-preview", response_model=SuccessResponse[PropertyGeocodePreviewResponse])
-def property_geocode_preview(
-    address_line: str = Query(...),
-    neighborhood: Optional[str] = Query(default=None),
-    city: str = Query(...),
-    state: str = Query(...),
-    postal_code: Optional[str] = Query(default=None),
+@router.get("/geocode-preview")
+def geocode_preview(
+    street: Optional[str] = Query(default=None),
+    county: Optional[str] = Query(default=None),
+    city: str = Query(..., min_length=1),
+    state: str = Query(..., min_length=1),
+    postalcode: Optional[str] = Query(default=None),
+    country: str = Query(default="Mexico", min_length=1),
 ):
-    result = geocode_location_preview(
-        address_line=address_line,
-        neighborhood=neighborhood,
-        city=city,
-        state=state,
-        postal_code=postal_code,
+    result = geocode_structured_location(
+        street=street or "",
+        county=county or "",
+        city=city or "",
+        state=state or "",
+        postalcode=postalcode or "",
+        country=country or "Mexico",
     )
 
     if not result:
-        raise HTTPException(status_code=404, detail="No fue posible ubicar la dirección.")
+        return {
+            "success": False,
+            "error": "No se pudo ubicar la dirección.",
+            "data": None,
+        }
 
-    return success_response(result)
+    return {
+        "success": True,
+        "data": result,
+    }
