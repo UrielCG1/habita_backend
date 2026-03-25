@@ -26,7 +26,7 @@ def geocode_location_preview(
     city = _clean(city)
     state = _clean(state)
     postal_code = _clean(postal_code)
-    country = _clean(country) or "Mexico"
+    # country = _clean(country) or "Mexico"
 
     if not city or not state:
         return None
@@ -40,14 +40,14 @@ def geocode_location_preview(
         search_context["street"] = address_line
     if neighborhood:
         search_context["county"] = neighborhood
-    if city:
-        search_context["city"] = city
+    # if city:
+        # search_context["city"] = city
     if state:
         search_context["state"] = state
     if postal_code:
         search_context["postalcode"] = postal_code
-    if country:
-        search_context["country"] = country
+    #if country:
+    #    search_context["country"] = country
 
     request_params = {
         **search_context,
