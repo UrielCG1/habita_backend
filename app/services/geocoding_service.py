@@ -1,75 +1,104 @@
-from decimal import Decimal
+import logging
 from typing import Optional
 
 import requests
 
+logger = logging.getLogger(__name__)
 
-NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search"
-NOMINATIM_HEADERS = {
-    "User-Agent": "HABITA/1.0 (admin@habita.local)",
-    "Accept-Language": "es-MX,es;q=0.9",
-}
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 
 
-def build_property_query(
-    address_line: Optional[str],
-    neighborhood: Optional[str],
-    city: Optional[str],
-    state: Optional[str],
-    postal_code: Optional[str],
-) -> str:
-    parts = [
-        (address_line or "").strip(),
-        (neighborhood or "").strip(),
-        (city or "").strip(),
-        (state or "").strip(),
-        (postal_code or "").strip(),
-        "México",
+def _join_location_parts(*parts: str) -> str:
+    return ", ".join([part.strip() for part in parts if part and part.strip()])
+
+
+def build_location_queries(
+    address_line: str,
+    neighborhood: str,
+    city: str,
+    state: str,
+    postal_code: str,
+) -> list[str]:
+    return [
+        _join_location_parts(address_line, neighborhood, city, state, postal_code, "México"),
+        _join_location_parts(address_line, neighborhood, city, state, "México"),
+        _join_location_parts(neighborhood, city, state, postal_code, "México"),
+        _join_location_parts(address_line, city, state, postal_code, "México"),
+        _join_location_parts(address_line, city, state, "México"),
+        _join_location_parts(city, state, postal_code, "México"),
+        _join_location_parts(city, state, "México"),
     ]
-    return ", ".join([part for part in parts if part])
 
 
-def geocode_property_address(
-    address_line: Optional[str],
-    neighborhood: Optional[str],
-    city: Optional[str],
-    state: Optional[str],
-    postal_code: Optional[str],
+def geocode_location_preview(
+    address_line: str,
+    neighborhood: str,
+    city: str,
+    state: str,
+    postal_code: str,
 ) -> Optional[dict]:
-    query = build_property_query(address_line, neighborhood, city, state, postal_code)
-    if not query:
-        return None
+    queries = build_location_queries(
+        address_line=address_line,
+        neighborhood=neighborhood,
+        city=city,
+        state=state,
+        postal_code=postal_code,
+    )
 
-    try:
-        response = requests.get(
-            NOMINATIM_SEARCH_URL,
-            params={
-                "q": query,
-                "format": "jsonv2",
-                "limit": 1,
-                "countrycodes": "mx",
-                "addressdetails": 1,
-            },
-            headers=NOMINATIM_HEADERS,
-            timeout=10,
-        )
-        response.raise_for_status()
-        payload = response.json()
+    headers = {
+        "User-Agent": "HABITA/1.0 (location preview)",
+    }
 
-        if not payload:
-            return None
+    for query in queries:
+        try:
+            response = requests.get(
+                NOMINATIM_URL,
+                params={
+                    "q": query,
+                    "format": "jsonv2",
+                    "limit": 1,
+                    "countrycodes": "mx",
+                    "addressdetails": 1,
+                },
+                headers=headers,
+                timeout=10,
+            )
+            response.raise_for_status()
+            results = response.json()
 
-        first = payload[0]
-        lat = first.get("lat")
-        lon = first.get("lon")
-        if lat is None or lon is None:
-            return None
+            logger.info("[geocode_location_preview] query=%s results=%s", query, len(results))
 
-        return {
-            "latitude": Decimal(str(lat)),
-            "longitude": Decimal(str(lon)),
-            "display_name": first.get("display_name", query),
-            "query": query,
-        }
-    except (requests.RequestException, ValueError):
-        return None
+            if not results:
+                continue
+
+            item = results[0]
+
+            lat = item.get("lat")
+            lon = item.get("lon")
+
+            if not lat or not lon:
+                continue
+
+            return {
+                "latitude": float(lat),
+                "longitude": float(lon),
+                "display_name": item.get("display_name") or query,
+                "query_used": query,
+            }
+
+        except requests.RequestException as exc:
+            logger.warning(
+                "[geocode_location_preview] error query=%s detail=%s",
+                query,
+                str(exc),
+            )
+            continue
+        except (TypeError, ValueError) as exc:
+            logger.warning(
+                "[geocode_location_preview] invalid result query=%s detail=%s",
+                query,
+                str(exc),
+            )
+            continue
+
+    return None

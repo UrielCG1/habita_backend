@@ -20,8 +20,8 @@ from app.services.property_service import (
     get_properties,
     get_property_by_id,
     patch_property,
-    geocode_property_address,
 )
+from app.services.geocoding_service import geocode_location_preview
 
 router = APIRouter(prefix="/properties", tags=["Properties"])
 
@@ -108,7 +108,7 @@ def property_geocode_preview(
     state: str = Query(...),
     postal_code: Optional[str] = Query(default=None),
 ):
-    result = geocode_property_address(
+    result = geocode_location_preview(
         address_line=address_line,
         neighborhood=neighborhood,
         city=city,
