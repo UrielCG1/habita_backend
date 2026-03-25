@@ -8,38 +8,37 @@ logger = logging.getLogger(__name__)
 NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search"
 
 
-def _clean(value: str) -> str:
+def _clean(value: Optional[str]) -> str:
     return (value or "").strip()
 
 
 def _build_structured_params(
     *,
-    street: str,
-    county: str,
-    city: str,
-    state: str,
-    postalcode: str,
-    country: str,
+    address_line: Optional[str],
+    neighborhood: Optional[str],
+    city: Optional[str],
+    state: Optional[str],
+    postal_code: Optional[str],
 ) -> dict:
     params = {
         "format": "jsonv2",
         "limit": 1,
         "addressdetails": 1,
         "countrycodes": "mx",
+        "country": "Mexico",
     }
 
-    street = _clean(street)
-    county = _clean(county)
+    address_line = _clean(address_line)
+    neighborhood = _clean(neighborhood)
     city = _clean(city)
     state = _clean(state)
-    postalcode = _clean(postalcode)
-    country = _clean(country)
+    postal_code = _clean(postal_code)
 
-    if street:
-        params["street"] = street
+    if address_line:
+        params["street"] = address_line
 
-    if county:
-        params["county"] = county
+    if neighborhood:
+        params["county"] = neighborhood
 
     if city:
         params["city"] = city
@@ -47,35 +46,36 @@ def _build_structured_params(
     if state:
         params["state"] = state
 
-    if postalcode:
-        params["postalcode"] = postalcode
-
-    if country:
-        params["country"] = country
+    if postal_code:
+        params["postalcode"] = postal_code
 
     return params
 
 
-def geocode_structured_location(
+def geocode_location_preview(
     *,
-    street: str,
-    county: str,
-    city: str,
-    state: str,
-    postalcode: str,
-    country: str = "Mexico",
+    address_line: Optional[str],
+    neighborhood: Optional[str],
+    city: Optional[str],
+    state: Optional[str],
+    postal_code: Optional[str],
 ) -> Optional[dict]:
+    city = _clean(city)
+    state = _clean(state)
+
+    if not city or not state:
+        return None
+
     params = _build_structured_params(
-        street=street,
-        county=county,
+        address_line=address_line,
+        neighborhood=neighborhood,
         city=city,
         state=state,
-        postalcode=postalcode,
-        country=country,
+        postal_code=postal_code,
     )
 
     headers = {
-        "User-Agent": "HABITA/1.0 (structured geocode preview)",
+        "User-Agent": "HABITA/1.0 (structured geocode)",
         "Accept-Language": "es-MX,es;q=0.9",
     }
 
@@ -90,21 +90,21 @@ def geocode_structured_location(
         results = response.json()
 
         logger.info(
-            "[geocode_structured_location] params=%s results=%s",
+            "[geocode_location_preview] structured params=%s results=%s",
             params,
             len(results),
         )
 
     except requests.RequestException as exc:
         logger.warning(
-            "[geocode_structured_location] request_error=%s params=%s",
+            "[geocode_location_preview] request_error=%s params=%s",
             str(exc),
             params,
         )
         return None
     except ValueError as exc:
         logger.warning(
-            "[geocode_structured_location] invalid_json=%s params=%s",
+            "[geocode_location_preview] invalid_json=%s params=%s",
             str(exc),
             params,
         )

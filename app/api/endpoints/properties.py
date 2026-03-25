@@ -21,7 +21,7 @@ from app.services.property_service import (
     get_property_by_id,
     patch_property,
 )
-from app.services.geocoding_service import geocode_structured_location
+from app.services.geocoding_service import geocode_location_preview
 
 router = APIRouter(prefix="/properties", tags=["Properties"])
 
@@ -109,7 +109,7 @@ def geocode_preview(
     postalcode: Optional[str] = Query(default=None),
     country: str = Query(default="Mexico", min_length=1),
 ):
-    result = geocode_structured_location(
+    result = geocode_location_preview(
         street=street or "",
         county=county or "",
         city=city or "",

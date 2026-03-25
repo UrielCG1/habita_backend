@@ -152,7 +152,14 @@ def patch_property(db: Session, property_obj: Property, payload: PropertyUpdate)
             "postal_code": update_data.get("postal_code", property_obj.postal_code),
         }
 
-        geocoded = geocode_location_preview(**merged)
+        geocoded = geocode_location_preview(
+            address_line=merged["address_line"],
+            neighborhood=merged["neighborhood"],
+            city=merged["city"],
+            state=merged["state"],
+            postal_code=merged["postal_code"],
+        )
+
         if geocoded:
             update_data["latitude"] = geocoded["latitude"]
             update_data["longitude"] = geocoded["longitude"]
