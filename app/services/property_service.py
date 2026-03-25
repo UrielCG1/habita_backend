@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.property import Property
 from app.schemas.property import PropertyCreate, PropertyUpdate
-from app.services.geocoding_service import geocode_property_address
+from app.services.geocoding_service import geocode_location_preview
 
 def get_properties(
     db: Session,
@@ -111,7 +111,7 @@ def delete_property(db: Session, property_obj: Property) -> None:
     
     
 def _apply_geocoding_to_data(data: dict) -> dict:
-    geocoded = geocode_property_address(
+    geocoded = geocode_location_preview(
         address_line=data.get("address_line"),
         neighborhood=data.get("neighborhood"),
         city=data.get("city"),
@@ -152,7 +152,7 @@ def patch_property(db: Session, property_obj: Property, payload: PropertyUpdate)
             "postal_code": update_data.get("postal_code", property_obj.postal_code),
         }
 
-        geocoded = geocode_property_address(**merged)
+        geocoded = geocode_location_preview(**merged)
         if geocoded:
             update_data["latitude"] = geocoded["latitude"]
             update_data["longitude"] = geocoded["longitude"]
