@@ -1,5 +1,7 @@
-from datetime import datetime
-from pydantic import BaseModel
+from datetime import date, datetime
+from typing import Literal, Optional
+
+from pydantic import BaseModel, Field, model_validator
 
 
 class OwnerReportsSummaryCards(BaseModel):
@@ -35,3 +37,28 @@ class OwnerDashboardReportsSummaryResponse(BaseModel):
     report_types: list[OwnerReportTypeItem]
     available_properties: list[OwnerAvailablePropertyItem]
     recent_reports: list[OwnerRecentReportItem]
+
+
+
+class OwnerReportExportRequest(BaseModel):
+    report_type: Literal["summary", "properties", "requests", "reputation"]
+    date_from: Optional[date] = None
+    date_to: Optional[date] = None
+    property_id: Optional[int] = None
+    format: Literal["pdf"] = "pdf"
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.date_from and self.date_to and self.date_from > self.date_to:
+            raise ValueError("date_from cannot be greater than date_to")
+        return self
+
+
+class OwnerReportExportResponse(BaseModel):
+    report_id: str
+    report_name: str
+    report_type: str
+    format: str
+    generated_at: datetime
+    generated_at_display: str
+    download_url: str

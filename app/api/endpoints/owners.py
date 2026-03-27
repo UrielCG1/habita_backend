@@ -10,8 +10,11 @@ from app.services.owner_dashboard_service import get_owner_dashboard_reputation
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
-
-from app.schemas.owner_reports import OwnerDashboardReportsSummaryResponse
+from app.schemas.owner_reports import (
+    OwnerDashboardReportsSummaryResponse,
+    OwnerReportExportRequest,
+    OwnerReportExportResponse,
+)
 from app.services.owner_reports_service import get_owner_dashboard_reports_summary
 
 
@@ -33,11 +36,16 @@ def owner_dashboard_reputation_endpoint(
 
 
 
+
+
 from fastapi.responses import FileResponse
+
+from app.services.owner_report_export_generation_service import export_owner_dashboard_report
 from app.services.owner_report_exports_service import (
     get_owner_report_export_or_404,
     validate_report_file_or_404,
 )
+
 
 @router.get(
     "/{owner_id}/dashboard/reports-summary",
@@ -54,6 +62,23 @@ def owner_dashboard_reports_summary_endpoint(
         owner_id=owner_id,
         date_from=date_from,
         date_to=date_to,
+    )
+    return success_response(data)
+
+
+@router.post(
+    "/{owner_id}/reports/export",
+    response_model=SuccessResponse[OwnerReportExportResponse],
+)
+def owner_report_export_endpoint(
+    owner_id: int,
+    payload: OwnerReportExportRequest,
+    db: Session = Depends(get_db),
+):
+    data = export_owner_dashboard_report(
+        db=db,
+        owner_id=owner_id,
+        payload=payload,
     )
     return success_response(data)
 
