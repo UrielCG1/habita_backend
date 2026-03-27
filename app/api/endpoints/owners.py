@@ -39,10 +39,6 @@ from app.services.owner_report_exports_service import (
     validate_report_file_or_404,
 )
 
-
-router = APIRouter(prefix="/owners", tags=["Owners"])
-
-
 @router.get(
     "/{owner_id}/dashboard/reports-summary",
     response_model=SuccessResponse[OwnerDashboardReportsSummaryResponse],
