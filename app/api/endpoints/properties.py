@@ -124,6 +124,7 @@ def geocode_preview(
 
 @router.get("/{property_id}", response_model=SuccessResponse[PropertyDetailResponse])
 def detail_property(property_id: int, db: Session = Depends(get_db)):
+    """ Obtiene el detalle de una propiedad por su ID. Incluye información completa, imágenes y datos del propietario."""
     property_obj = get_property_by_id(db, property_id)
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
