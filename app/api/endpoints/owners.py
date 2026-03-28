@@ -1,4 +1,3 @@
-from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.responses import success_response
@@ -31,11 +30,6 @@ def owner_dashboard_reputation_endpoint(
 ):
     data = get_owner_dashboard_reputation(db=db, owner_id=owner_id)
     return success_response(data)
-
-
-
-
-
 
 
 from fastapi.responses import FileResponse
@@ -101,4 +95,31 @@ def owner_report_download_endpoint(
         path=str(file_path),
         media_type=report.mime_type or "application/octet-stream",
         filename=report.file_name,
+    )
+    
+
+
+
+@router.get("/{owner_id}/reports/{report_id}/download")
+def owner_report_download_endpoint(
+    owner_id: int,
+    report_id: str,
+    db: Session = Depends(get_db),
+):
+    report = get_owner_report_export_or_404(
+        db=db,
+        owner_id=owner_id,
+        report_id=report_id,
+    )
+
+    file_path = validate_report_file_or_404(report.file_path)
+
+    download_name = report.file_name or "reporte.pdf"
+    if not download_name.lower().endswith(".pdf"):
+        download_name = f"{download_name}.pdf"
+
+    return FileResponse(
+        path=str(file_path),
+        media_type="application/pdf",
+        filename=download_name,
     )
