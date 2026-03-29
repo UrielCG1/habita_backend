@@ -71,14 +71,6 @@ def _draw_header(pdf, report_name, owner_name, generated_at, period_label):
         except Exception:
             pass
 
-    pdf.setFillColor(COLOR_PRIMARY)
-    pdf.setFont("Helvetica-Bold", 18)
-    pdf.drawString(MARGIN_X + 40, y + 18, "HABITA")
-
-    pdf.setFillColor(COLOR_MUTED)
-    pdf.setFont("Helvetica", 9)
-    pdf.drawString(MARGIN_X + 40, y - 4, "Owner Portal")
-
     # Badge derecha
     badge_w = 104
     badge_h = 22
