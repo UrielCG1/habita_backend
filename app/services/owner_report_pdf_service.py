@@ -58,7 +58,7 @@ def _draw_header(pdf, report_name, owner_name, generated_at, period_label):
     if REPORTS_LOGO_PATH.exists():
         try:
             logo = ImageReader(str(REPORTS_LOGO_PATH))
-            pdf.drawImage(logo, MARGIN_X, y - 10, width=34, height=34, mask="auto")
+            pdf.drawImage(logo, MARGIN_X, y - 10, height=34, mask="auto")
         except Exception:
             pass
 
