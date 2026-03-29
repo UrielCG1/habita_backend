@@ -97,29 +97,3 @@ def owner_report_download_endpoint(
         filename=report.file_name,
     )
     
-
-
-
-@router.get("/{owner_id}/reports/{report_id}/download")
-def owner_report_download_endpoint(
-    owner_id: int,
-    report_id: str,
-    db: Session = Depends(get_db),
-):
-    report = get_owner_report_export_or_404(
-        db=db,
-        owner_id=owner_id,
-        report_id=report_id,
-    )
-
-    file_path = validate_report_file_or_404(report.file_path)
-
-    download_name = report.file_name or "reporte.pdf"
-    if not download_name.lower().endswith(".pdf"):
-        download_name = f"{download_name}.pdf"
-
-    return FileResponse(
-        path=str(file_path),
-        media_type="application/pdf",
-        filename=download_name,
-    )

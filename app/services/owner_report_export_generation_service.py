@@ -12,7 +12,7 @@ from app.services.owner_report_pdf_service import (
     build_report_name,
     generate_owner_report_pdf,
 )
-from app.services.owner_reports_service import get_owner_dashboard_reports_summary
+from app.services.owner_report_payload_builders_service import build_owner_report_payload
 
 
 REPORTS_STORAGE_ROOT = Path("storage/reports/owners")
@@ -34,13 +34,13 @@ def export_owner_dashboard_report(
     if payload.format != "pdf":
         raise HTTPException(status_code=400, detail="Only pdf format is supported")
 
-    # Por ahora reutilizamos reports-summary como base del PDF.
-    # Luego, si quieres, separamos contenido especializado por report_type.
-    report_payload = get_owner_dashboard_reports_summary(
+    report_payload = build_owner_report_payload(
         db=db,
         owner_id=owner_id,
+        report_type=payload.report_type,
         date_from=payload.date_from,
         date_to=payload.date_to,
+        property_id=payload.property_id,
     )
 
     report_name = build_report_name(

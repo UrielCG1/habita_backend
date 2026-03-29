@@ -62,3 +62,4 @@ class OwnerReportExportResponse(BaseModel):
     generated_at: datetime
     generated_at_display: str
     download_url: str
+    property_id: Optional[int] = None
