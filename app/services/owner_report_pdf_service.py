@@ -55,87 +55,115 @@ def _draw_footer(pdf):
 def _draw_header(pdf, report_name, owner_name, generated_at, period_label):
     y = TOP_Y
 
+    # Marca
     if REPORTS_LOGO_PATH.exists():
         try:
             logo = ImageReader(str(REPORTS_LOGO_PATH))
-            pdf.drawImage(logo, MARGIN_X, y - 10, width=94, height=34, mask="auto")
+            pdf.drawImage(
+                logo,
+                MARGIN_X,
+                y - 2,
+                width=80,
+                height=30,
+                mask="auto",
+                preserveAspectRatio=True,
+            )
         except Exception:
             pass
 
     pdf.setFillColor(COLOR_PRIMARY)
     pdf.setFont("Helvetica-Bold", 18)
-    pdf.drawString(MARGIN_X + 44, y + 10, "HABITA")
+    pdf.drawString(MARGIN_X + 40, y + 18, "HABITA")
 
     pdf.setFillColor(COLOR_MUTED)
     pdf.setFont("Helvetica", 9)
-    pdf.drawString(MARGIN_X + 44, y - 2, "Owner Portal · Reporte generado automáticamente")
+    pdf.drawString(MARGIN_X + 40, y - 4, "Owner Portal")
+
+    # Badge derecha
+    badge_w = 104
+    badge_h = 22
+    badge_x = PAGE_WIDTH - MARGIN_X - badge_w
+    badge_y = y + 2
+
+    pdf.setFillColor(COLOR_ACCENT)
+    pdf.roundRect(badge_x, badge_y - badge_h, badge_w, badge_h, 8, fill=1, stroke=0)
 
     pdf.setFillColor(COLOR_TEXT)
-    pdf.setFont("Helvetica-Bold", 22)
-    pdf.drawString(MARGIN_X, y - 42, report_name)
+    pdf.setFont("Helvetica-Bold", 8)
+    pdf.drawCentredString(badge_x + badge_w / 2, badge_y - 14, "Reporte HABITA")
 
-    meta_y = y - 68
+    # Título
+    title_y = y - 44
+    pdf.setFillColor(COLOR_TEXT)
+    pdf.setFont("Helvetica-Bold", 24)
+    pdf.drawString(MARGIN_X, title_y, report_name)
+
+    # Meta en bloque
+    meta_y = title_y - 26
     pdf.setFont("Helvetica", 10)
     pdf.setFillColor(COLOR_TEXT)
     pdf.drawString(MARGIN_X, meta_y, f"Owner: {owner_name}")
-    pdf.drawString(MARGIN_X, meta_y - 15, f"Generado: {generated_at.strftime('%d/%m/%Y %H:%M')}")
-    pdf.drawString(MARGIN_X, meta_y - 30, f"Periodo: {period_label}")
+    pdf.drawString(MARGIN_X, meta_y - 16, f"Generado: {generated_at.strftime('%d/%m/%Y %H:%M')}")
+    pdf.drawString(MARGIN_X, meta_y - 32, f"Periodo: {period_label}")
 
-    pdf.setFillColor(COLOR_ACCENT)
-    pdf.roundRect(PAGE_WIDTH - 170, y - 22, 128, 26, 8, fill=1, stroke=0)
-
-    pdf.setFillColor(COLOR_TEXT)
-    pdf.setFont("Helvetica-Bold", 9)
-    pdf.drawCentredString(PAGE_WIDTH - 106, y - 6, "Reporte HABITA")
-
+    # Línea divisoria con más aire
+    line_y = meta_y - 48
     pdf.setStrokeColor(COLOR_BORDER)
-    pdf.line(MARGIN_X, y - 105, PAGE_WIDTH - MARGIN_X, y - 105)
+    pdf.setLineWidth(1)
+    pdf.line(MARGIN_X, line_y, PAGE_WIDTH - MARGIN_X, line_y)
 
-    return y - 128
+    return line_y - 26
 
 def _draw_kpi_cards(pdf, y, cards):
-    card_width = 118
-    card_height = 64
-    gap = 10
+    card_width = 112
+    card_height = 68
+    gap_x = 12
+    gap_y = 12
     x = MARGIN_X
+    start_x = MARGIN_X
+    max_x = PAGE_WIDTH - MARGIN_X
 
     for index, (label, value) in enumerate(cards):
         bg = COLOR_BG_SOFT if index % 2 == 0 else COLOR_BLUE_SOFT
+
+        if x + card_width > max_x:
+            x = start_x
+            y -= card_height + gap_y
 
         pdf.setFillColor(bg)
         pdf.roundRect(x, y - card_height, card_width, card_height, 10, fill=1, stroke=0)
 
         pdf.setFillColor(COLOR_TEXT)
-        pdf.setFont("Helvetica-Bold", 16)
-        pdf.drawString(x + 10, y - 24, str(value))
+        pdf.setFont("Helvetica-Bold", 17)
+        pdf.drawString(x + 10, y - 25, str(value))
 
         pdf.setFillColor(COLOR_MUTED)
         pdf.setFont("Helvetica", 8)
-        pdf.drawString(x + 10, y - 42, label)
+        pdf.drawString(x + 10, y - 45, label)
 
-        x += card_width + gap
+        x += card_width + gap_x
 
-        if x + card_width > PAGE_WIDTH - MARGIN_X:
-            x = MARGIN_X
-            y -= card_height + 10
-
-    return y - card_height - 14
+    return y - card_height - 24
 
 def _draw_section_title(pdf, y, title):
+    y -= 6
     pdf.setFillColor(COLOR_PRIMARY)
     pdf.setFont("Helvetica-Bold", 14)
     pdf.drawString(MARGIN_X, y, title)
 
     pdf.setStrokeColor(COLOR_BORDER)
-    pdf.line(MARGIN_X, y - 8, PAGE_WIDTH - MARGIN_X, y - 8)
-    return y - 22
+    pdf.setLineWidth(0.8)
+    pdf.line(MARGIN_X, y - 10, PAGE_WIDTH - MARGIN_X, y - 10)
+
+    return y - 28
 
 def _draw_table(pdf, y, columns, rows, col_widths):
     table_width = sum(col_widths)
-    row_height = 22
+    row_height = 24
 
-    y = _new_page_if_needed(pdf, y, 40)
+    y = _new_page_if_needed(pdf, y, 44)
 
+    # Header tabla
     pdf.setFillColor(COLOR_PRIMARY)
     pdf.roundRect(MARGIN_X, y - row_height, table_width, row_height, 6, fill=1, stroke=0)
 
@@ -144,20 +172,18 @@ def _draw_table(pdf, y, columns, rows, col_widths):
     pdf.setFont("Helvetica-Bold", 9)
 
     for idx, col in enumerate(columns):
-        pdf.drawString(current_x + 6, y - 14, col)
+        pdf.drawString(current_x + 6, y - 15, col)
         current_x += col_widths[idx]
 
-    y -= row_height
+    y -= row_height + 4
 
+    # Filas
     for row_index, row in enumerate(rows):
-        y = _new_page_if_needed(pdf, y, row_height + 8)
+        y = _new_page_if_needed(pdf, y, row_height + 10)
 
         fill_color = COLOR_WHITE if row_index % 2 == 0 else COLOR_BG_SOFT
         pdf.setFillColor(fill_color)
-        pdf.rect(MARGIN_X, y - row_height, table_width, row_height, fill=1, stroke=0)
-
-        pdf.setStrokeColor(COLOR_BORDER)
-        pdf.line(MARGIN_X, y - row_height, MARGIN_X + table_width, y - row_height)
+        pdf.roundRect(MARGIN_X, y - row_height + 2, table_width, row_height, 4, fill=1, stroke=0)
 
         current_x = MARGIN_X
         pdf.setFillColor(COLOR_TEXT)
@@ -168,9 +194,9 @@ def _draw_table(pdf, y, columns, rows, col_widths):
             pdf.drawString(current_x + 6, y - 14, text)
             current_x += col_widths[idx]
 
-        y -= row_height
+        y -= row_height + 4
 
-    return y - 12
+    return y - 16
 
 def _draw_properties_report(pdf, y, payload):
     summary = payload.get("summary_cards", {})
@@ -243,21 +269,21 @@ def _draw_rating_breakdown(pdf, y, breakdown):
         count = breakdown.get(stars, 0)
 
         pdf.setFillColor(COLOR_BG_SOFT)
-        pdf.roundRect(MARGIN_X, y - 14, 220, 14, 6, fill=1, stroke=0)
+        pdf.roundRect(MARGIN_X, y - 14, 210, 14, 6, fill=1, stroke=0)
 
-        bar_width = min(220, 24 * count)
+        bar_width = min(210, 28 * count)
         if bar_width > 0:
             pdf.setFillColor(COLOR_ACCENT)
             pdf.roundRect(MARGIN_X, y - 14, bar_width, 14, 6, fill=1, stroke=0)
 
         pdf.setFillColor(COLOR_TEXT)
         pdf.setFont("Helvetica", 9)
-        pdf.drawString(MARGIN_X + 228, y - 11, f"{stars} estrellas")
+        pdf.drawString(MARGIN_X + 220, y - 11, f"{stars} estrellas")
         pdf.drawRightString(PAGE_WIDTH - MARGIN_X, y - 11, str(count))
 
-        y -= 22
+        y -= 24
 
-    return y - 4
+    return y - 14
     
 def _draw_reputation_report(pdf, y, payload):
     summary = payload.get("summary_cards", {})
@@ -486,7 +512,5 @@ def generate_owner_report_pdf(
     elif report_type == "reputation":
         y = _draw_reputation_report(pdf, y, payload)
 
-    pdf.setFont("Helvetica", 9)
-    pdf.setFillColor(COLOR_MUTED)
-    pdf.drawRightString(PAGE_WIDTH - MARGIN_X, 30, "HABITA · Owner Portal")
+    _draw_footer(pdf)
     pdf.save()
