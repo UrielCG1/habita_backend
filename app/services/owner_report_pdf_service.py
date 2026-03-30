@@ -389,6 +389,92 @@ def _draw_summary_report(pdf, y, payload):
         [260, 120, 90],
     )
 
+REPORT_TYPE_LABELS = {
+    "summary": "Resumen general",
+    "properties": "Propiedades",
+    "requests": "Solicitudes",
+    "reputation": "Reputación",
+}
+
+SPANISH_MONTHS = {
+    1: "Enero",
+    2: "Febrero",
+    3: "Marzo",
+    4: "Abril",
+    5: "Mayo",
+    6: "Junio",
+    7: "Julio",
+    8: "Agosto",
+    9: "Septiembre",
+    10: "Octubre",
+    11: "Noviembre",
+    12: "Diciembre",
+}
+
+
+def _safe_filename(value: str) -> str:
+    value = value.strip().lower()
+    value = re.sub(r"[^a-z0-9]+", "_", value)
+    value = re.sub(r"_+", "_", value).strip("_")
+    return value or "report"
+
+
+def build_report_period_label(date_from: date | None, date_to: date | None) -> str:
+    if date_from and date_to and date_from.year == date_to.year and date_from.month == date_to.month:
+        return f"{SPANISH_MONTHS[date_from.month]} {date_from.year}"
+
+    if date_from and date_to:
+        return f"{date_from.strftime('%d-%m-%Y')} a {date_to.strftime('%d-%m-%Y')}"
+
+    if date_from:
+        return f"Desde {date_from.strftime('%d-%m-%Y')}"
+
+    if date_to:
+        return f"Hasta {date_to.strftime('%d-%m-%Y')}"
+
+    return "Histórico"
+
+
+def build_report_name(report_type: str, date_from: date | None, date_to: date | None) -> str:
+    label = REPORT_TYPE_LABELS.get(report_type, report_type)
+    period = build_report_period_label(date_from, date_to)
+    return f"{label} - {period}"
+
+
+def build_report_file_name(report_type: str, date_from: date | None, date_to: date | None) -> str:
+    name = build_report_name(report_type, date_from, date_to)
+    return f"{_safe_filename(name)}.pdf"
+
+
+def _draw_wrapped_text(pdf: canvas.Canvas, text: str, x: float, y: float, max_width: float, line_height: float = 14) -> float:
+    if not text:
+        return y
+
+    words = text.split()
+    current_line = ""
+
+    for word in words:
+        test_line = f"{current_line} {word}".strip()
+        if pdf.stringWidth(test_line, "Helvetica", 10) <= max_width:
+            current_line = test_line
+        else:
+            pdf.drawString(x, y, current_line)
+            y -= line_height
+            current_line = word
+
+    if current_line:
+        pdf.drawString(x, y, current_line)
+        y -= line_height
+
+    return y
+
+
+def _ensure_space(pdf: canvas.Canvas, y: float, needed: float = 70) -> float:
+    if y < needed:
+        pdf.showPage()
+        pdf.setFont("Helvetica", 10)
+        return A4[1] - 2.2 * cm
+    return y
 
 def generate_owner_report_pdf(
     file_path,
