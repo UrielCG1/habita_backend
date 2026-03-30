@@ -9,7 +9,7 @@ FAKE_DOCS = [
         "title": "Arquitectura técnica HABITA",
         "description": "Documento general",
         "file_name": "arquitectura_habita.pdf",
-        "file_path": "/var/www/html/habita/backend/arquitectura_habita.pdf",
+        "file_path": "/var/www/html/habita/backend/storage/arquitectura_habita.pdf",
         "uploaded_at": "2026-03-29T12:00:00",
     }
 ]
